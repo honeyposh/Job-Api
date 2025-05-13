@@ -1,4 +1,5 @@
 const express = require("express");
+const uploadDocuments = require("../middleware/multer");
 const authMiddleware = require("../middleware/auth");
 const router = express.Router();
 const {
@@ -8,7 +9,7 @@ const {
   applyForJob,
 } = require("../controllers/application");
 router.get("/", authMiddleware, getAllApplications);
-router.post("/:jobId", authMiddleware, applyForJob);
+router.post("/:jobId", authMiddleware, uploadDocuments, applyForJob);
 router.delete("/:id", authMiddleware, deleteApplication);
-router.patch("/:id", authMiddleware, editApplication);
+router.patch("/:id", authMiddleware, uploadDocuments, editApplication);
 module.exports = router;

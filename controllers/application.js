@@ -13,45 +13,62 @@ exports.getAllApplications = asyncWrapper(async (req, res, next) => {
 });
 exports.applyForJob = asyncWrapper(async (req, res, next) => {
   const jobId = req.params.jobId;
-  const { resume, coverLetter } = req.body;
-  if (!resume || !coverLetter || !jobId) {
+  const resumeFile = req.files?.resume?.[0].filename;
+  const coverLetterFile = req.files?.coverLetter?.[0].filename;
+  if (!resumeFile || !coverLetterFile || !jobId) {
     return next(
       createCustomError("resume, coverletter, jobId are required", 400)
     );
   }
+  const resumeUrl = `${process.env.BASE_URL}/files/${resumeFile}`;
+  const coverLetterUrl = `${process.env.BASE_URL}/files/${coverLetterFile}`;
   const application = await Application.create({
-    resume,
-    coverLetter,
+    resume: resumeUrl,
+    coverLetter: coverLetterUrl,
     userId: req.user.id,
     jobId,
   });
   res.json({ message: "Application Successful", application });
 });
 exports.editApplication = asyncWrapper(async (req, res, next) => {
-  const { resume, coverLetter } = req.body;
+  const applicationId = req.params.id;
+  const userId = req.user.id;
+
+  const updateData = {};
+  // const resumeFile = req.files?.resume?.[0];
+  // const coverLetterFile = req.files?.coverLetter?.[0];
+  const resumeFile = req.files?.resume?.[0].filename;
+  const coverLetterFile = req.files?.coverLetter?.[0].filename;
+  const resumeUrl = `${process.env.BASE_URL}/files/${resumeFile}`;
+  const coverLetterUrl = `${process.env.BASE_URL}/files/${coverLetterFile}`;
+  if (resumeFile) {
+    updateData.resume = resumeUrl;
+  }
+
+  if (coverLetterFile) {
+    updateData.coverLetter = coverLetterUrl;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return next(createCustomError("No files provided to update", 400));
+  }
+
   const application = await Application.findOneAndUpdate(
-    {
-      _id: req.params.id,
-      userId: req.user.id,
-    },
-    req.body,
-    {
-      new: true,
-      runValidators: true,
-    }
+    { _id: applicationId, userId },
+    updateData,
+    { new: true, runValidators: true }
   );
-  if ("jobId" in req.body) {
-    return next(
-      createCustomError("You cannot change the jobId of an application", 400)
-    );
-  }
+
   if (!application) {
-    return next(createCustomError("No application", 404));
+    return next(createCustomError("No application found", 404));
   }
-  res
-    .status(200)
-    .json({ message: "Application successfully updataed", application });
+
+  res.status(200).json({
+    message: "Application successfully updated",
+    application,
+  });
 });
+
 exports.deleteApplication = asyncWrapper(async (req, res, next) => {
   const application = await Application.findOneAndDelete({
     userId: req.user.id,

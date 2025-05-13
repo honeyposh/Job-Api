@@ -2,7 +2,6 @@ const { createCustomError } = require("../errors/customApiError");
 const Job = require("../models/job");
 const asyncWrapper = require("../middleware/ayncWrapper");
 const User = require("../models/user");
-const job = require("../models/job");
 exports.createJob = asyncWrapper(async (req, res, next) => {
   const { title, company, location, description } = req.body;
   if (!title || !company || !location || !description) {

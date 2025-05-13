@@ -5,7 +5,9 @@ exports.getAllApplications = asyncWrapper(async (req, res, next) => {
   const applications = await Application.find({ userId: req.user.id })
     .populate("jobId", "position company")
     .populate("userId", "name")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .select("-resume -coverLetter");
+
   if (!applications.length) {
     return next(createCustomError("No applications found", 404));
   }
